@@ -1,11 +1,7 @@
 var fs = require('fs');
 var path = require('path');
-var jsdom = require("jsdom");
+var jsdom = require('jsdom');
 const { JSDOM } = jsdom;
-var scriptElementsRegex = new RegExp('<script[^<>]*>.*</script>', 'gi');
-var htmlTagsRegex = new RegExp('</?[^<>]*>', 'gi');
-var newLineRegex = new RegExp('\\n\\r', 'g');
-var whiteSpaceRegex = new RegExp('\\s+', 'g');
 
 function getFiles(dir, files_) {
   files_ = files_ || [];
@@ -26,19 +22,6 @@ function getFiles(dir, files_) {
   } catch (err) {
     console.log(err);
   } 
-}
-
-function pageTitle($) {
-  var headerTypes = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
-  var headerText = null;
-  headerTypes.forEach(type => {
-    if (headerText) {
-      return;
-    } else if ($(type).length > 0) {
-      headerText = $(type).first().html();
-    }
-  });
-  return headerText;
 }
 
 function removeTrailingSlash(str) {
@@ -69,48 +52,48 @@ function combinePaths(array) {
   }).join('/');
 }
 
-function removeExtraSpaces(string, whiteSpaceReplacement = '') {
+function removeExtraSpaces(string, whiteSpaceReplacement = ' ') {
   string = string.trim();
-  string = string.replace(/\s\s+/g, whiteSpaceReplacement);
+  string = string.replace(/\s+/g, whiteSpaceReplacement);
   return string;
 }
 
 function parseString(string) {
   if (!string) { return; }
-  return string.trim().replace(scriptElementsRegex, '').replace(htmlTagsRegex, '').replace(newLineRegex, '').replace(whiteSpaceRegex, ' ').replace(/&nbsp;/g, ' ')
+  return removeExtraSpaces(string.replace(/&nbsp;/g, ' '));
 }
 
 function processHTMLFile(filePath, opts) {
   var html = fs.readFileSync(filePath, 'utf-8');
   const dom = new JSDOM(html).window.document;
-  var window = dom.defaultView;
-  var $ = require('jquery')(window);
   (opts.excludeSelectors || []).forEach(excludeSelector => {
-    $(excludeSelector).remove();
+    const els = Array.from(dom.querySelectorAll(excludeSelector));
+    if (els.length > 0) {
+      els.forEach(el => el.remove());
+    }
   });
-  
-  var text = '';
+  var bodyText = '';
   var finalArray = [];
   const headerLevels = ['h1','h2','h3','h4','h5','h6'];
   const headers = {};
-  opts.includeElements.forEach(element => { 
-    headerLevels.forEach(headerLevel => {
-      const headerLevelEls = [];
-      $(element).find(headerLevel).each((index, headerElement) => {
-        headerLevelEls.push(headerElement);
+  opts.includeSelectors.forEach(selector => { 
+    const elements = Array.from(dom.querySelectorAll(selector));
+    elements.forEach(element => {
+      if (!element) { return; }
+      headerLevels.forEach(headerLevel => {
+        const headerEls = Array.from(element.querySelectorAll(headerLevel));
+        if (headerEls.length > 0) {
+          headers[headerLevel] = headerEls.map(header => parseString(header.textContent));
+          headerEls.forEach(el => el.remove());
+        }
       });
-      if (headerLevelEls.length > 0) {
-        headers[headerLevel] = headerLevelEls.map(headerElement => parseString($(headerElement).text()))
-      }
-    })
-    $(element).find('h1,h2,h3,h4,h5,h6').remove();
-    text += removeExtraSpaces($(element).text(), ' ');
-
+      bodyText += element.textContent;
+    });
   });
-  if (!text) { return;}
+  if (!bodyText && headers === {}) { return;}
   finalArray.push({
     href: path.dirname(filePath.replace(opts.sourceDir, '')),
-    body: parseString(text),
+    body: parseString(bodyText),
     headers: headers
   });
   return finalArray;

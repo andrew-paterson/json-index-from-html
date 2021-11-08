@@ -9,7 +9,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "jquery": "^3.6.0",
     "jsdom": "^15.1.1",
     "tag-and-release": "^1.0.14"
   }
