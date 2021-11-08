@@ -89,9 +89,7 @@ function processHTMLFile(filePath, opts) {
     $(excludeSelector).remove();
   });
   
-  const title = parseString(pageTitle($, path.dirname(filePath.replace(opts.sourceDir, ''))));
   var text = '';
-  // var headers = [];
   var finalArray = [];
   const headerLevels = ['h1','h2','h3','h4','h5','h6'];
   const headers = {};
@@ -104,25 +102,13 @@ function processHTMLFile(filePath, opts) {
       if (headerLevelEls.length > 0) {
         headers[headerLevel] = headerLevelEls.map(headerElement => parseString($(headerElement).text()))
       }
-
-      // headerLevelEls
     })
     $(element).find('h1,h2,h3,h4,h5,h6').remove();
     text += removeExtraSpaces($(element).text(), ' ');
 
   });
   if (!text) { return;}
-  // headers.forEach(header => {
-  //   finalArray.push({
-  //     title: title,
-  //     href: path.dirname(filePath.replace(opts.sourceDir, '')),
-  //     content: parseString(header),
-  //     contentType: 'header'
-  //   });
-  // });
-
   finalArray.push({
-    // title: title,
     href: path.dirname(filePath.replace(opts.sourceDir, '')),
     body: parseString(text),
     headers: headers
