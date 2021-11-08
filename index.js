@@ -24,34 +24,6 @@ function getFiles(dir, files_) {
   } 
 }
 
-function removeTrailingSlash(str) {
-  if (str.charAt(str.length-1) === '/') {
-    return str.substring(0, str.length - 1);
-  }
-  return str;
-}
-
-function removeLeadingSlash(str) {
-  if (str.charAt(0) === '/') {
-    return str.substring(1);
-  }
-  return str;
-}
-
-function removeLeadingandTrailingSlash(str) {
-  str = removeLeadingSlash(str);
-  str = removeTrailingSlash(str);
-  return str;
-}
-
-function combinePaths(array) {
-  return array.map(item => {
-    item = removeLeadingSlash(item);
-    item = removeTrailingSlash(item);
-    return item;
-  }).join('/');
-}
-
 function removeExtraSpaces(string, whiteSpaceReplacement = ' ') {
   string = string.trim();
   string = string.replace(/\s+/g, whiteSpaceReplacement);
@@ -61,6 +33,15 @@ function removeExtraSpaces(string, whiteSpaceReplacement = ' ') {
 function parseString(string) {
   if (!string) { return; }
   return removeExtraSpaces(string.replace(/&nbsp;/g, ' '));
+}
+
+function pageTitleElement(dom) {
+  const headerLevels = ['h1','h2','h3','h4','h5','h6'];
+  for (var headerLevel of headerLevels) {
+    if (dom.querySelector(headerLevel)) {
+      return dom.querySelector(headerLevel);
+    }
+  }
 }
 
 function processHTMLFile(filePath, opts) {
@@ -84,7 +65,8 @@ function processHTMLFile(filePath, opts) {
         const headerEls = Array.from(element.querySelectorAll(headerLevel));
         if (headerEls.length > 0) {
           headers[headerLevel] = headerEls.map(header => parseString(header.textContent));
-          headerEls.forEach(el => el.remove());
+          const pageTitle = pageTitleElement(dom);
+          pageTitle.remove();
         }
       });
       bodyText += element.textContent;
@@ -101,11 +83,13 @@ function processHTMLFile(filePath, opts) {
 
 module.exports = {
   run(opts) {
+    const sourceDirAbsolute = path.resolve(process.cwd(), opts.sourceDir);
     var absoluteExclueUrls = (opts.excludeUrls || []).map(excludePath => {
-      return removeLeadingandTrailingSlash(combinePaths([opts.sourceDir, excludePath]));
+      return path.join(sourceDirAbsolute, excludePath)
     });
+
     var filesToIndex = getFiles(opts.sourceDir).filter(filePath => {
-      return absoluteExclueUrls.indexOf(removeLeadingandTrailingSlash(filePath)) < 0;
+      return absoluteExclueUrls.indexOf(filePath) < 0;
     });
     
     var pagesIndex = [];
@@ -114,6 +98,7 @@ module.exports = {
     }).forEach(filePath => {
       pagesIndex = pagesIndex.concat(processHTMLFile(filePath, opts));
     });
+
     var final = {searchIndex: pagesIndex};
     
     fs.writeFile(`${opts.outPath}`, JSON.stringify(final, null, 2), function(err) {
