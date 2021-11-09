@@ -2,6 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var jsdom = require('jsdom');
 const { JSDOM } = jsdom;
+const minimatch = require('minimatch');
 
 function getFiles(dir, files_) {
   files_ = files_ || [];
@@ -13,9 +14,7 @@ function getFiles(dir, files_) {
       if (fs.statSync(name).isDirectory()) {
         getFiles(name, files_);
       } else {
-        if (path.extname(name) === '.html') {
-          files_.push(name);
-        }
+        files_.push(name);
       }
     }
     return files_;
@@ -73,40 +72,57 @@ function processHTMLFile(filePath, opts) {
     });
   });
   if (!bodyText && headers === {}) { return;}
+  const relativeFilePath = filePath.replace(opts.sourceDir, '');
   finalArray.push({
-    href: path.dirname(filePath.replace(opts.sourceDir, '')),
+    href: opts.hrefFunction ? opts.hrefFunction(relativeFilePath) : relativeFilePath,
     body: parseString(bodyText),
     headers: headers
   });
   return finalArray;
 }
 
-module.exports = {
-  run(opts) {
+function minimatchCount(string, patterns = []) {
+  const final = {
+    total: patterns.length,
+    matches: 0
+  }
+  patterns.forEach(pattern => {
+    if (minimatch(string, pattern)) {
+      final.matches ++
+    }
+  });
+  return final;
+}
+
+module.exports = function(opts) {
     const sourceDirAbsolute = path.resolve(process.cwd(), opts.sourceDir);
-    var absoluteExclueUrls = (opts.excludeUrls || []).map(excludePath => {
+    const includePaths = opts.includePaths || ['*.html', '**/*.html'];
+    var absoluteIncludePaths = includePaths.map(includePath => {
+      return path.join(sourceDirAbsolute, includePath)
+    });
+    var absoluteExcluePaths = (opts.excludePaths || []).map(excludePath => {
       return path.join(sourceDirAbsolute, excludePath)
     });
-
     var filesToIndex = getFiles(opts.sourceDir).filter(filePath => {
-      return absoluteExclueUrls.indexOf(filePath) < 0;
+     
+      return minimatchCount(filePath, absoluteIncludePaths).matches > 0;
+    })
+    .filter(filePath => {
+      return minimatchCount(filePath, absoluteExcluePaths).matches === 0;
     });
-    
     var pagesIndex = [];
     filesToIndex.filter(item => {
       return item;
     }).forEach(filePath => {
       pagesIndex = pagesIndex.concat(processHTMLFile(filePath, opts));
     });
-
-    var final = {searchIndex: pagesIndex};
     
-    fs.writeFile(`${opts.outPath}`, JSON.stringify(final, null, 2), function(err) {
+    fs.writeFile(`${opts.outPath}`, JSON.stringify(pagesIndex, null, 2), function(err) {
       if(err) {
         return console.log(err);
       }
       console.log(`Success! ${opts.outPath} was saved`);
     });
   }
-}
+
 

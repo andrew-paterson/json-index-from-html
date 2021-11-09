@@ -1,8 +1,9 @@
 {
   "name": "json-index-from-html",
-  "version": "0.0.0",
-  "description": "",
+  "version": "v0.0.1",
+  "description": "Generates a JSON content index from a directory containing html files. Only indexes content within the files and selectors that you specify in the options.",
   "main": "index.js",
+  "repository": "https://github.com/andrew-paterson/json-index-from-html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,6 +11,7 @@
   "license": "ISC",
   "devDependencies": {
     "jsdom": "^15.1.1",
-    "tag-and-release": "^1.0.14"
+    "tag-and-release": "^1.0.14",
+    "minimatch": "^3.0.4"
   }
 }
