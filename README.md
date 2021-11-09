@@ -77,7 +77,7 @@ An array of element selectors to exclude from the indexing. The `textContent` fr
 
 Function (optional)
 
-By default, the `href` property of each item in the index will be the filepath relatiove to the `sourceDir`. This can be customised by passing a function as `hrefFunction`, which received the relative file path as its only argument.
+By default, the `href` property of each item in the index will be the filepath relative to the `sourceDir`. This can be customised by passing a function as `hrefFunction`, which receives the relative file path as its only argument.
 
 #### hrefFunction examples
 
