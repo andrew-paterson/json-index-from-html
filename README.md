@@ -59,13 +59,15 @@ An array of filepaths or glob patterns to set which files will be indexed. The p
 
 Array (optional) 
 
-An array of filepaths or glob patterns to exclude from indexing. The paths opr globs are resolved relative to the `sourceDir`. Matching files are excluded from the filtered file list that results from applying the `includePaths` above.
+An array of filepaths or glob patterns to exclude from indexing. The paths or globs are resolved relative to the `sourceDir`. Matching files are excluded from the filtered file list that results from applying the `includePaths` above.
 
 ### includeSelectors
 
 Array (optional) 
 
 An array of element selectors to include in the indexing. The `textContent` from each matched element will be included in the index. 
+
+Note that if not specified, each item in the index will include the text content from any repeating elements, such as the site headers, main nav or footer, which is likely undesirable.
 
 ### excludeSelectors
 
@@ -95,7 +97,7 @@ Likewise, I could add my website base url to have absolute urls as the href.
 
 ## Usage example
 
-Assuming I have a site at `./my-site-folder` and one of the files in it is `my-site-folder/contact/index.html`, with the following HTML:
+Assuming I have a site at `./my-site-folder` and the only file in it is `my-site-folder/contact/index.html`, with the following HTML:
 
     <html lang="en">
     <head>
@@ -151,21 +153,25 @@ The following implementation will output the JSON below:
 
 ### Result
 
-    [{      
-      "href": "/contact",
-      "body": "You can contact us in various ways. Email info@example.com Phone 055 555 5555 Address 1 Long Street City Cape Town Country South Africa.",
-      "headers": {
-        "h1": [
-          "Contact"
-        ],
-        "h2": [
-          "Address",
-          "Phone",
-          "Email"
-        ],
-        "h3": [
-          "City",
-          "Country"
-        ]
+The file `./my-site-folder/search-index.json` wpould be generated, with the following contents:
+
+    [
+      {      
+        "href": "/contact",
+        "body": "You can contact us in various ways. Email info@example.com Phone 055 555 5555 Address 1 Long Street City Cape Town Country South Africa.",
+        "headers": {
+          "h1": [
+            "Contact"
+          ],
+          "h2": [
+            "Address",
+            "Phone",
+            "Email"
+          ],
+          "h3": [
+            "City",
+            "Country"
+          ]
+        }
       }
-    }]
+    ]
