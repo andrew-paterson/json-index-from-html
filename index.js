@@ -55,7 +55,7 @@ function processHTMLFile(filePath, opts) {
   var bodyText = '';
   var finalArray = [];
   const headerLevels = ['h1','h2','h3','h4','h5','h6'];
-  const headers = {};
+  const content = {};
   opts.includeSelectors.forEach(selector => { 
     const elements = Array.from(dom.querySelectorAll(selector));
     elements.forEach(element => {
@@ -63,7 +63,7 @@ function processHTMLFile(filePath, opts) {
       headerLevels.forEach(headerLevel => {
         const headerEls = Array.from(element.querySelectorAll(headerLevel));
         if (headerEls.length > 0) {
-          headers[headerLevel] = headerEls.map(header => parseString(header.textContent));
+          content[headerLevel] = headerEls.map(header => parseString(header.textContent));
           const pageTitle = pageTitleElement(dom);
           pageTitle.remove();
         }
@@ -71,12 +71,13 @@ function processHTMLFile(filePath, opts) {
       bodyText += element.textContent;
     });
   });
+  content.body = bodyText ? parseString(bodyText) : null;
   if (!bodyText && headers === {}) { return;}
   const relativeFilePath = filePath.replace(opts.sourceDir, '');
   finalArray.push({
     href: opts.hrefFunction ? opts.hrefFunction(relativeFilePath) : relativeFilePath,
-    body: parseString(bodyText),
-    headers: headers
+    title: (content.h1 || []).length === 1 ? content.h1[0] : (dom.querySelector('title') || {}).textContent,
+    content: content
   });
   return finalArray;
 }

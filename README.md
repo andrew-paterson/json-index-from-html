@@ -6,8 +6,7 @@ The JSON output is an array of objects, with one item for each file that is inde
 
     [{
       "href": "/contact",
-      "body": "You can contact us in various ways. Email info@example.com Phone 055 555 5555 Address 1 Long Street City Cape Town Country South Africa.",
-      "headers": {
+      "content": {
         "h1": [
           "Contact"
         ],
@@ -19,7 +18,8 @@ The JSON output is an array of objects, with one item for each file that is inde
         "h3": [
           "City",
           "Country"
-        ]
+        ],
+        "body": "You can contact us in various ways. Email info@example.com Phone 055 555 5555 Address 1 Long Street City Cape Town Country South Africa.",
       }
     }]
 
@@ -158,8 +158,7 @@ The file `./my-site-folder/search-index.json` wpould be generated, with the foll
     [
       {      
         "href": "/contact",
-        "body": "You can contact us in various ways. Email info@example.com Phone 055 555 5555 Address 1 Long Street City Cape Town Country South Africa.",
-        "headers": {
+        "content": {
           "h1": [
             "Contact"
           ],
@@ -172,6 +171,7 @@ The file `./my-site-folder/search-index.json` wpould be generated, with the foll
             "City",
             "Country"
           ]
-        }
+        }, 
+        "body": "You can contact us in various ways. Email info@example.com Phone 055 555 5555 Address 1 Long Street City Cape Town Country South Africa.",
       }
     ]
