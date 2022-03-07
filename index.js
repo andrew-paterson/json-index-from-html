@@ -45,7 +45,7 @@ function pageTitleElement(dom) {
 }
 
 function processHTMLFile(filePath, opts) {
-  const relativeFilePath = filePath.replace(opts.sourceDir, '');
+  const relativeFilePath = filePath.replace(opts.sourceDirAbsolute, '');
   const href = opts.hrefFunction ? opts.hrefFunction(relativeFilePath) : relativeFilePath;
 
   if (opts.includeHrefs && minimatchCount(href, opts.includeHrefs).matches === 0) {
@@ -108,15 +108,15 @@ function minimatchCount(string, patterns = []) {
 }
 
 module.exports = function(opts) {
-    const sourceDirAbsolute = path.resolve(process.cwd(), opts.sourceDir);
+    opts.sourceDirAbsolute = path.resolve(process.cwd(), opts.sourceDir);
     const includePaths = opts.includeFilePaths || ['*.html', '**/*.html'];
     var absoluteIncludePaths = includePaths.map(includePath => {
-      return path.join(sourceDirAbsolute, includePath)
+      return path.join(opts.sourceDirAbsolute, includePath)
     });
     var absoluteExcludePaths = (opts.excludeFilePaths || []).map(excludePath => {
-      return path.join(sourceDirAbsolute, excludePath)
+      return path.join(opts.sourceDirAbsolute, excludePath)
     });
-    var filesToIndex = getFiles(opts.sourceDir).filter(filePath => {
+    var filesToIndex = getFiles(opts.sourceDirAbsolute).filter(filePath => {
       return minimatchCount(filePath, absoluteIncludePaths).matches > 0;
     })
     .filter(filePath => {
@@ -132,7 +132,7 @@ module.exports = function(opts) {
     pagesIndex = pagesIndex.filter(item => item);
 
     if (opts.includedPathsLog) {
-      fs.writeFileSync(`search-index-paths-log.json`, JSON.stringify({paths: filesToIndex.map(item => item.replace(sourceDirAbsolute, ''))}, null, 2));
+      fs.writeFileSync(`search-index-paths-log.json`, JSON.stringify({paths: filesToIndex.map(item => item.replace(opts.sourceDirAbsolute, ''))}, null, 2));
     }
     if (opts.includedHrefsLog) {
       const includedHrefsLog = pagesIndex.map(item => item.href);
