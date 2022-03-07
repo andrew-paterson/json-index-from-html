@@ -3,6 +3,7 @@ var path = require('path');
 var jsdom = require('jsdom');
 const { JSDOM } = jsdom;
 const minimatch = require('minimatch');
+var mkdirp = require('mkdirp');
 
 function getFiles(dir, files_) {
   files_ = files_ || [];
@@ -44,6 +45,17 @@ function pageTitleElement(dom) {
 }
 
 function processHTMLFile(filePath, opts) {
+  const relativeFilePath = filePath.replace(opts.sourceDir, '');
+  const href = opts.hrefFunction ? opts.hrefFunction(relativeFilePath) : relativeFilePath;
+
+  if (opts.includeHrefs && minimatchCount(href, opts.includeHrefs).matches === 0) {
+    return;
+  }
+
+  if (opts.excludeHrefs && minimatchCount(href, opts.excludeHrefs).matches > 0) {
+    return;
+  }
+
   var html = fs.readFileSync(filePath, 'utf-8');
   const dom = new JSDOM(html).window.document;
   (opts.excludeSelectors || []).forEach(excludeSelector => {
@@ -72,10 +84,10 @@ function processHTMLFile(filePath, opts) {
     });
   });
   content.body = bodyText ? parseString(bodyText) : null;
-  if (!bodyText && headers === {}) { return;}
-  const relativeFilePath = filePath.replace(opts.sourceDir, '');
+  if (!bodyText) { return;} // TODO 
+  // const relativeFilePath = filePath.replace(opts.sourceDir, '');
   finalArray.push({
-    href: opts.hrefFunction ? opts.hrefFunction(relativeFilePath) : relativeFilePath,
+    href: href,
     title: (content.h1 || []).length === 1 ? content.h1[0] : (dom.querySelector('title') || {}).textContent,
     content: content
   });
@@ -97,27 +109,36 @@ function minimatchCount(string, patterns = []) {
 
 module.exports = function(opts) {
     const sourceDirAbsolute = path.resolve(process.cwd(), opts.sourceDir);
-    const includePaths = opts.includePaths || ['*.html', '**/*.html'];
+    const includePaths = opts.includeFilePaths || ['*.html', '**/*.html'];
     var absoluteIncludePaths = includePaths.map(includePath => {
       return path.join(sourceDirAbsolute, includePath)
     });
-    var absoluteExcluePaths = (opts.excludePaths || []).map(excludePath => {
+    var absoluteExcludePaths = (opts.excludeFilePaths || []).map(excludePath => {
       return path.join(sourceDirAbsolute, excludePath)
     });
     var filesToIndex = getFiles(opts.sourceDir).filter(filePath => {
-     
       return minimatchCount(filePath, absoluteIncludePaths).matches > 0;
     })
     .filter(filePath => {
-      return minimatchCount(filePath, absoluteExcluePaths).matches === 0;
-    });
-    var pagesIndex = [];
-    filesToIndex.filter(item => {
+      return minimatchCount(filePath, absoluteExcludePaths).matches === 0;
+    }).filter(item => {
       return item;
-    }).forEach(filePath => {
+    });
+
+    var pagesIndex = [];
+    filesToIndex.forEach(filePath => {
       pagesIndex = pagesIndex.concat(processHTMLFile(filePath, opts));
     });
-    
+    pagesIndex = pagesIndex.filter(item => item);
+
+    if (opts.includedPathsLog) {
+      fs.writeFileSync(`search-index-paths-log.json`, JSON.stringify({paths: filesToIndex.map(item => item.replace(sourceDirAbsolute, ''))}, null, 2));
+    }
+    if (opts.includedHrefsLog) {
+      const includedHrefsLog = pagesIndex.map(item => item.href);
+      fs.writeFileSync(`search-index-hrefs-log.json`, JSON.stringify({paths: includedHrefsLog}, null, 2));
+    }
+    mkdirp.sync(path.dirname(opts.outPath));
     fs.writeFile(`${opts.outPath}`, JSON.stringify(pagesIndex, null, 2), function(err) {
       if(err) {
         return console.log(err);

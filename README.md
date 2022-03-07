@@ -47,7 +47,7 @@ String (required)
 
 Path of the output file, including the file extension (Probably .json),
 
-### includePaths
+### includeFilePaths
 
 Array (optional) 
 
@@ -55,11 +55,23 @@ Default = `['*.html', '**/*.html']`
 
 An array of filepaths or glob patterns to set which files will be indexed. The paths or globs are resolved relative to the `sourceDir`. 
 
-### excludePaths
+### excludeFilePaths
 
 Array (optional) 
 
 An array of filepaths or glob patterns to exclude from indexing. The paths or globs are resolved relative to the `sourceDir`. Matching files are excluded from the filtered file list that results from applying the `includePaths` above.
+
+
+## includeHrefs
+
+array (optional)
+
+Similar to `includeFilePaths`, but filters the entries in the index based on the value of the `href` property of the resulting index object. 
+## excludeHrefs
+
+array (optional)
+
+Similar to `excludeFilePaths`, but excludes entries from the index based on the value of the `href` property of the resulting index object. 
 
 ### includeSelectors
 
